@@ -64,7 +64,7 @@ jobs:
           Compress-Archive -Path dist/V2New -DestinationPath dist/V2New-windows-64.zip -CompressionLevel Optimal
 
       - name: 发布 Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           name: V2New ${{ steps.ver.outputs.version }}
