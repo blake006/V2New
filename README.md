@@ -42,6 +42,15 @@ Sync upstream   ── 合并成功 ──▶  push 到 main
 - **合并冲突不会静默跳过**：工作流会回滚并在 issue 里列出冲突文件，避免把上游改动悄悄丢掉。
 - 发布包必须保留 `V2New/` 顶层目录——`AmazTool` 解压时会去掉第一段路径，扁平结构会导致升级后什么都没变。
 
+手动操作：
+
+```bash
+# 立刻检查一次上游（不用等定时任务）
+gh workflow run sync-upstream.yml
+# 只重新构建发版
+gh workflow run release.yml
+```
+
 ---
 
 ## 相对原版的改动
