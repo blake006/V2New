@@ -64,6 +64,21 @@ jobs:
             echo "state=conflict" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: 触发构建发版
+        if: steps.merge.outputs.state == 'merged' || steps.merge.outputs.state == 'attached'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // 用 GITHUB_TOKEN 推送不会触发新的 workflow 运行，
+            // 这里显式派发一次，保证「合并成功 -> 出新版本」这条链路不断。
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'release.yml',
+              ref: 'main',
+            });
+            core.info('已派发 Build & Release');
+
       - name: 读取冲突文件清单
         if: steps.merge.outputs.state == 'conflict'
         id: conflicts
