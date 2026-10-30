@@ -2551,6 +2551,12 @@ public static class ConfigHandler
     /// <returns>0 if successful</returns>
     public static async Task<int> SetDefaultRouting(Config config, RoutingItem routingItem)
     {
+        // 全新配置下还没有任何路由项，此时 routingItem 为 null，直接返回失败即可
+        if (routingItem is null)
+        {
+            return -1;
+        }
+
         var items = await AppManager.Instance.RoutingItems();
         if (items.Any(t => t.Id == routingItem.Id && t.IsActive == true))
         {
