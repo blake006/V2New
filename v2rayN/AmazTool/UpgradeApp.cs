@@ -74,7 +74,8 @@ internal class UpgradeApp
                         return;
                     }
 
-                    if (string.Equals(Utils.GetExePath(), entryOutputPath, pathComparison))
+                    var isSelf = string.Equals(Utils.GetExePath(), entryOutputPath, pathComparison);
+                    if (isSelf)
                     {
                         File.Move(Utils.GetExePath(), thisAppOldFile);
                     }
@@ -86,7 +87,19 @@ internal class UpgradeApp
                         continue;
                     }
 
-                    TryExtractToFile(entry, entryOutputPath);
+                    var extracted = TryExtractToFile(entry, entryOutputPath);
+                    // 替换升级工具自身失败时必须还原，否则下次升级会提示"升级程序不存在"
+                    if (isSelf && !extracted)
+                    {
+                        try
+                        {
+                            File.Move(thisAppOldFile, entryOutputPath);
+                        }
+                        catch
+                        {
+                            // 还原也失败时保留 .tmp，至少文件还在
+                        }
+                    }
 
                     Console.WriteLine(entryOutputPath);
                 }
