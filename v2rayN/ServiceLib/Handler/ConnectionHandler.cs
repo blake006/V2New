@@ -106,35 +106,50 @@ public static class ConnectionHandler
     }
 
     /// <summary>
-    /// Gets IP and country information through specified proxy.
+    /// Gets IP, region and IP-quality information through specified proxy.
     /// </summary>
     public static async Task<IpInfoResult?> GetIPInfo(IWebProxy? webProxy, CancellationToken cancellationToken = default)
     {
         try
         {
-            var url = AppManager.Instance.Config.SpeedTestItem.IPAPIUrl;
+            var cfg = AppManager.Instance.Config.SpeedTestItem;
+            var url = cfg.IPAPIUrl;
             if (url.IsNullOrEmpty())
             {
                 return null;
             }
 
-            var downloadHandle = new DownloadService();
-            var result = await downloadHandle.TryDownloadString(url, webProxy, "", cancellationToken);
-            if (result == null)
+            var result = await QueryIpApiAsync(url, webProxy, cancellationToken);
+            if (result is null)
             {
                 return null;
             }
 
-            var ipInfo = JsonUtils.Deserialize<IPAPIInfo>(result);
-            if (ipInfo == null)
+            // 主接口（如 ip.sb）不带 IP 质量标记时，再用质量接口补一次，
+            // 两者地址相同则说明一次请求已经拿到了全部字段，不再重复请求
+            if (result.Value.Purity is null
+                && cfg.EnableIpPurity
+                && cfg.IpPurityUrl.IsNotEmpty()
+                && !string.Equals(cfg.IpPurityUrl, url, StringComparison.OrdinalIgnoreCase))
             {
-                return null;
+                var quality = await QueryIpApiAsync(cfg.IpPurityUrl, webProxy, cancellationToken);
+                if (quality is not null)
+                {
+                    var q = quality.Value;
+                    var p = result.Value;
+                    result = p with
+                    {
+                        Region = p.Region ?? q.Region,
+                        City = p.City ?? q.City,
+                        Purity = q.Purity,
+                        IpType = q.IpType,
+                        Flags = q.Flags,
+                        Asn = p.Asn ?? q.Asn,
+                    };
+                }
             }
 
-            var ip = ipInfo.ip ?? ipInfo.clientIp ?? ipInfo.ip_addr ?? ipInfo.query;
-            var country = ipInfo.country_code ?? ipInfo.country ?? ipInfo.countryCode ?? ipInfo.location?.country_code ?? "unknown";
-
-            return new IpInfoResult(country, ip);
+            return result;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -144,5 +159,12 @@ public static class ConnectionHandler
         {
             return null;
         }
+    }
+
+    private static async Task<IpInfoResult?> QueryIpApiAsync(string url, IWebProxy? webProxy, CancellationToken cancellationToken)
+    {
+        var downloadHandle = new DownloadService();
+        var text = await downloadHandle.TryDownloadString(url, webProxy, "", cancellationToken);
+        return text is null ? null : IpInfoParser.Parse(text);
     }
 }

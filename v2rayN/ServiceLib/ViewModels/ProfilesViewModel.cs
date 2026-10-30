@@ -277,6 +277,12 @@ public partial class ProfilesViewModel : MyReactiveObject
         {
             NoticeManager.Instance.SendMessageEx(result.Delay);
             NoticeManager.Instance.Enqueue(result.Delay);
+
+            // 整轮测速结束时，按用户设置自动整理列表
+            if (result.Delay == ResUI.SpeedtestingCompleted)
+            {
+                await OnSpeedTestCompletedAsync();
+            }
             return;
         }
         var item = ProfileItems.FirstOrDefault(it => it.IndexId == result.IndexId);
@@ -298,7 +304,57 @@ public partial class ProfilesViewModel : MyReactiveObject
         {
             item.IpInfo = result.IpInfo ?? string.Empty;
         }
+        if (result.IpCountry.IsNotEmpty())
+        {
+            item.IpRegion = result.IpRegion ?? string.Empty;
+            item.IpCity = result.IpCity ?? string.Empty;
+            item.IpRegionVal = result.IpCountry.ToRegionDisplay(result.IpCity, result.IpRegion);
+        }
+        if (result.IpPurity is not null)
+        {
+            item.IpType = result.IpType ?? string.Empty;
+            item.IpTypeVal = IpQualityHelper.FormatType(result.IpType, result.IpPurity);
+            item.IpPurity = result.IpPurity.Value;
+            item.IpPurityVal = IpQualityHelper.FormatPurity(result.IpPurity);
+        }
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 一轮测速结束后执行：自动移除无效节点 / 自动排序
+    /// </summary>
+    private async Task OnSpeedTestCompletedAsync()
+    {
+        var autoSort = _config.SpeedTestItem.AutoSortAfterTest;
+        var autoRemove = _config.SpeedTestItem.AutoRemoveInvalidAfterTest;
+        if (autoSort <= 0 && !autoRemove)
+        {
+            return;
+        }
+
+        try
+        {
+            if (autoRemove)
+            {
+                var count = await ConfigHandler.RemoveInvalidServerResult(_config, _config.SubIndexId);
+                if (count > 0)
+                {
+                    NoticeManager.Instance.Enqueue(string.Format(ResUI.RemoveInvalidServerResultTip, count));
+                }
+            }
+
+            if (autoSort > 0)
+            {
+                // 1 按延迟（低的在前），2 按速度（快的在前）
+                await ConfigHandler.SortServersByTestResult(_config, _config.SubIndexId, autoSort == 2);
+            }
+
+            await RefreshServers();
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog("OnSpeedTestCompletedAsync", ex);
+        }
     }
 
     public async Task UpdateStatistics(ServerSpeedItem update)
@@ -427,6 +483,13 @@ public partial class ProfilesViewModel : MyReactiveObject
                         DelayVal = t33?.Delay != 0 ? $"{t33?.Delay}" : string.Empty,
                         SpeedVal = t33?.Speed > 0 ? $"{t33?.Speed}" : t33?.Message ?? string.Empty,
                         IpInfo = t33?.IpInfo ?? string.Empty,
+                        IpRegion = t33?.IpRegion ?? string.Empty,
+                        IpCity = t33?.IpCity ?? string.Empty,
+                        IpType = t33?.IpType ?? string.Empty,
+                        IpRegionVal = t33?.IpCountry.ToRegionDisplay(t33?.IpCity, t33?.IpRegion) ?? string.Empty,
+                        IpTypeVal = IpQualityHelper.FormatType(t33?.IpType, t33?.IpPurity),
+                        IpPurity = t33?.IpPurity ?? -1,
+                        IpPurityVal = IpQualityHelper.FormatPurity(t33?.IpPurity),
                         TodayDown = t22 == null ? "" : Utils.HumanFy(t22.TodayDown),
                         TodayUp = t22 == null ? "" : Utils.HumanFy(t22.TodayUp),
                         TotalDown = t22 == null ? "" : Utils.HumanFy(t22.TotalDown),

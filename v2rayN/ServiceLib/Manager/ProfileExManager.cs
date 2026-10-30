@@ -6,6 +6,9 @@ public class ProfileExManager
     private ConcurrentBag<ProfileExItem> _lstProfileEx = [];
     private readonly ConcurrentQueue<string> _queIndexIds = new();
     private readonly Lock _profileExLock = new();
+    // 已落库的 IndexId，避免每次保存都整表读一遍来判断新增还是更新
+    private readonly HashSet<string> _knownIds = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Lock _knownIdsLock = new();
     public static ProfileExManager Instance => _instance.Value;
     private static readonly string _tag = "ProfileExHandler";
 
@@ -33,6 +36,14 @@ public class ProfileExManager
         {
             _lstProfileEx = lstProfileEx;
         }
+        lock (_knownIdsLock)
+        {
+            _knownIds.Clear();
+            foreach (var item in lstProfileEx)
+            {
+                _knownIds.Add(item.IndexId);
+            }
+        }
     }
 
     private void IndexIdEnqueue(string indexId)
@@ -55,20 +66,23 @@ public class ProfileExManager
 
         if (lstIds.Count > 0)
         {
-            var lstExists = await SQLiteHelper.Instance.TableAsync<ProfileExItem>().ToListAsync();
             List<ProfileExItem> lstInserts = [];
             List<ProfileExItem> lstUpdates = [];
 
             foreach (var id in lstIds)
             {
-                var item = lstExists.FirstOrDefault(t => t.IndexId == id);
                 var itemNew = _lstProfileEx?.FirstOrDefault(t => t.IndexId == id);
                 if (itemNew is null)
                 {
                     continue;
                 }
 
-                if (item is not null)
+                bool exists;
+                lock (_knownIdsLock)
+                {
+                    exists = _knownIds.Contains(id);
+                }
+                if (exists)
                 {
                     lstUpdates.Add(itemNew);
                 }
@@ -83,6 +97,13 @@ public class ProfileExManager
                 if (lstInserts.Count > 0)
                 {
                     await SQLiteHelper.Instance.InsertAllAsync(lstInserts);
+                    lock (_knownIdsLock)
+                    {
+                        foreach (var item in lstInserts)
+                        {
+                            _knownIds.Add(item.IndexId);
+                        }
+                    }
                 }
 
                 if (lstUpdates.Count > 0)
@@ -134,6 +155,10 @@ public class ProfileExManager
         {
             _lstProfileEx = [];
         }
+        lock (_knownIdsLock)
+        {
+            _knownIds.Clear();
+        }
     }
 
     public async Task SaveTo()
@@ -177,6 +202,23 @@ public class ProfileExManager
         var profileEx = GetProfileExItem(indexId);
 
         profileEx.IpInfo = ipInfo;
+        IndexIdEnqueue(indexId);
+    }
+
+    /// <summary>
+    /// 写入完整的出口 IP 画像：地区、城市、纯净度、扣分原因
+    /// </summary>
+    public void SetTestIpInfo(string indexId, IpInfoResult info)
+    {
+        var profileEx = GetProfileExItem(indexId);
+
+        profileEx.IpInfo = info.ToString();
+        profileEx.IpCountry = info.Country;
+        profileEx.IpRegion = info.Region;
+        profileEx.IpCity = info.City;
+        profileEx.IpType = info.IpType;
+        profileEx.IpPurity = info.Purity;
+        profileEx.IpFlags = info.Flags;
         IndexIdEnqueue(indexId);
     }
 

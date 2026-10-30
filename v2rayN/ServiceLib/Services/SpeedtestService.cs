@@ -496,12 +496,25 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
         ProfileExManager.Instance.SetTestDelay(it.IndexId, responseTime);
         await UpdateFunc(it.IndexId, responseTime.ToString());
 
-        if (!_config.UiItem.HideColumnIpInfo && responseTime > 0)
+        if (!_config.UiItem.HideColumnIpInfo || _config.SpeedTestItem.EnableIpPurity)
         {
-            var ipInfo = await ConnectionHandler.GetIPInfo(webProxy, ct);
-            var ipStr = ipInfo?.ToString() ?? Global.None;
-            ProfileExManager.Instance.SetTestIpInfo(it.IndexId, ipStr);
-            await UpdateIpInfoFunc(it.IndexId, ipStr);
+            if (responseTime > 0)
+            {
+                var ipInfo = await ConnectionHandler.GetIPInfo(webProxy, ct);
+                if (ipInfo is not null)
+                {
+                    ProfileExManager.Instance.SetTestIpInfo(it.IndexId, ipInfo.Value);
+                    await UpdateIpInfoFunc(it.IndexId, ipInfo.Value);
+                }
+                else
+                {
+                    await UpdateIpInfoFunc(it.IndexId, ResUI.SpeedtestingSkip);
+                }
+            }
+            else
+            {
+                await UpdateIpInfoFunc(it.IndexId, ResUI.SpeedtestingSkip);
+            }
         }
         else
         {
@@ -620,5 +633,20 @@ public class SpeedtestService(Config config, Func<SpeedTestResult, Task> updateF
     private async Task UpdateIpInfoFunc(string indexId, string ip)
     {
         await _updateFunc?.Invoke(new() { IndexId = indexId, IpInfo = ip });
+    }
+
+    private async Task UpdateIpInfoFunc(string indexId, IpInfoResult info)
+    {
+        await _updateFunc?.Invoke(new()
+        {
+            IndexId = indexId,
+            IpInfo = info.ToString(),
+            IpCountry = info.Country,
+            IpRegion = info.Region,
+            IpCity = info.City,
+            IpType = info.IpType,
+            IpPurity = info.Purity,
+            IpFlags = info.Flags,
+        });
     }
 }

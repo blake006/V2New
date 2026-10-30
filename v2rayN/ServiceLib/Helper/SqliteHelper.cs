@@ -16,6 +16,25 @@ public sealed class SQLiteHelper
         _connstr = Utils.GetConfigPath(_configDB);
         _db = new SQLiteConnection(_connstr, false);
         _dbAsync = new SQLiteAsyncConnection(_connstr, false);
+        ApplyPragmas();
+    }
+
+    /// <summary>
+    /// 测速时多个线程会同时写 ProfileExItem，统计与日志也在写同一个库。
+    /// 开 WAL 后读写互不阻塞，并把同步级别降为 NORMAL，明显减少锁等待。
+    /// </summary>
+    private void ApplyPragmas()
+    {
+        try
+        {
+            _db.Execute("PRAGMA journal_mode=WAL;");
+            _db.Execute("PRAGMA synchronous=NORMAL;");
+            _db.Execute("PRAGMA busy_timeout=5000;");
+        }
+        catch
+        {
+            // 数据库不可写时退回默认行为，不影响启动
+        }
     }
 
     public CreateTableResult CreateTable<T>()

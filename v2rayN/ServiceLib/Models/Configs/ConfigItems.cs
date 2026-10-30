@@ -164,6 +164,18 @@ public class SpeedTestItem
     public string UdpTestTarget { get; set; }
     public int? SpeedTestPageSize { get; set; }
     public int? SpeedTestDelayInterval { get; set; }
+
+    /// <summary>是否在测速时顺带检测 IP 纯净度</summary>
+    public bool EnableIpPurity { get; set; } = true;
+
+    /// <summary>IP 质量接口，默认 ip-api.com（提供 hosting/proxy 标记）</summary>
+    public string IpPurityUrl { get; set; } = "http://ip-api.com/json/?fields=status,message,country,countryCode,regionName,city,isp,org,as,proxy,hosting,mobile,query";
+
+    /// <summary>测试完成后自动排序：0 关闭，1 按延迟，2 按速度</summary>
+    public int AutoSortAfterTest { get; set; }
+
+    /// <summary>测试完成后自动移除无效节点</summary>
+    public bool AutoRemoveInvalidAfterTest { get; set; }
 }
 
 [Serializable]

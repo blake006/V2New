@@ -18,6 +18,8 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:DelayColorConverter x:Key="DelayColorConverter" />
+        <conv:PurityColorConverter x:Key="PurityColorConverter" />
+        <conv:EmptyStringToCollapsedConverter x:Key="EmptyStringToCollapsedConverter" />
     </UserControl.Resources>
     <Grid>
         <DockPanel>
@@ -172,6 +174,25 @@
                             x:Name="menuSortServerResult"
                             Height="{StaticResource MenuItemHeight}"
                             Header="{x:Static resx:ResUI.menuSortServerResult}" />
+                        <MenuItem Header="{x:Static resx:ResUI.menuAutoSortAfterTest}">
+                            <MenuItem
+                                x:Name="menuAutoSortOff"
+                                Header="{x:Static resx:ResUI.menuAutoSortOff}"
+                                IsCheckable="True" />
+                            <MenuItem
+                                x:Name="menuAutoSortByDelay"
+                                Header="{x:Static resx:ResUI.menuAutoSortByDelay}"
+                                IsCheckable="True" />
+                            <MenuItem
+                                x:Name="menuAutoSortBySpeed"
+                                Header="{x:Static resx:ResUI.menuAutoSortBySpeed}"
+                                IsCheckable="True" />
+                            <Separator />
+                            <MenuItem
+                                x:Name="menuAutoRemoveInvalid"
+                                Header="{x:Static resx:ResUI.menuAutoRemoveInvalidAfterTest}"
+                                IsCheckable="True" />
+                        </MenuItem>
                         <Separator />
                         <MenuItem
                             x:Name="menuMoveToGroup"
@@ -353,6 +374,49 @@
                         Binding="{Binding IpInfo}"
                         ExName="IpInfo"
                         Header="{x:Static resx:ResUI.LvTestIpInfo}" />
+
+                    <base:MyDGTextColumn
+                        x:Name="colIpRegion"
+                        Width="120"
+                        Binding="{Binding IpRegionVal}"
+                        ExName="IpRegion"
+                        Header="{x:Static resx:ResUI.LvIpRegion}"
+                        SortMemberPath="IpRegionVal" />
+
+                    <base:MyDGTemplateColumn
+                        x:Name="colIpPurity"
+                        Width="110"
+                        ExName="IpPurity"
+                        Header="{x:Static resx:ResUI.LvIpPurity}"
+                        SortMemberPath="IpPurity">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    ToolTip="{Binding IpPurityVal}">
+                                    <Border
+                                        Margin="0,0,5,0"
+                                        Padding="5,1"
+                                        VerticalAlignment="Center"
+                                        Background="{Binding IpPurity, Converter={StaticResource PurityColorConverter}}"
+                                        CornerRadius="3"
+                                        Visibility="{Binding IpTypeVal, Converter={StaticResource EmptyStringToCollapsedConverter}}">
+                                        <TextBlock
+                                            FontSize="11"
+                                            Foreground="White"
+                                            Text="{Binding IpTypeVal}" />
+                                    </Border>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontWeight="SemiBold"
+                                        Foreground="{Binding IpPurity, Converter={StaticResource PurityColorConverter}}"
+                                        Text="{Binding IpPurityVal}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </base:MyDGTemplateColumn>
 
                     <base:MyDGTextColumn
                         x:Name="colTodayDown"

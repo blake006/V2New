@@ -1,0 +1,113 @@
+name: Sync upstream
+
+# 每天检查上游 2dust/v2rayN，有新提交就合并进 main。
+# 合并成功后会自动触发 Build & Release，产出新的安装包。
+on:
+  schedule:
+    # UTC 20:00 = 北京时间 04:00
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出本仓库
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 合并上游 master
+        id: merge
+        run: |
+          set -u
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          OLD=$(git rev-parse HEAD)
+          git remote add upstream https://github.com/2dust/v2rayN.git 2>/dev/null || true
+          git fetch --no-tags upstream master
+
+          # 情况一：本地历史与上游没有共同祖先（首次接管时会出现）。
+          # 直接把当前内容整体重挂到上游之上，之后就能正常 merge 了。
+          if ! git merge-base HEAD upstream/master >/dev/null 2>&1; then
+            echo "历史与上游无关联，执行首次挂接"
+            git checkout -B main upstream/master
+            git checkout "$OLD" -- .
+            git add -A
+            git commit -m "chore: 将定制改动挂接到上游 $(git rev-parse --short upstream/master) 之上"
+            git push --force origin main
+            echo "state=attached" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 情况二：已经是最新
+          if git merge-base --is-ancestor upstream/master HEAD; then
+            echo "上游没有新提交"
+            echo "state=uptodate" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 情况三：常规合并
+          echo "上游有新提交，开始合并"
+          if git merge --no-edit upstream/master; then
+            git push origin HEAD:main
+            echo "state=merged" >> "$GITHUB_OUTPUT"
+          else
+            # 记录冲突文件，回滚工作区，交给人工处理
+            git diff --name-only --diff-filter=U > /tmp/conflicts.txt || true
+            git merge --abort || true
+            echo "state=conflict" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 读取冲突文件清单
+        if: steps.merge.outputs.state == 'conflict'
+        id: conflicts
+        run: |
+          if [ -s /tmp/conflicts.txt ]; then
+            {
+              echo 'files<<EOF'
+              cat /tmp/conflicts.txt
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "files=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 冲突时开 issue
+        if: steps.merge.outputs.state == 'conflict'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = `${{ steps.conflicts.outputs.files }}`.trim();
+            const body = [
+              '上游 `2dust/v2rayN` 有新提交，但自动合并产生了冲突，本次没有合并。',
+              '',
+              '### 冲突文件',
+              '',
+              files ? files.split('\n').map(f => `- \`${f}\``).join('\n') : '（未能获取清单，请本地执行 merge 查看）',
+              '',
+              '### 处理方式',
+              '',
+              '```bash',
+              'git fetch upstream master',
+              'git merge upstream/master',
+              '# 解决冲突后',
+              'git commit && git push',
+              '```',
+              '',
+              '解决并推送后，`Build & Release` 会自动产出新版本。',
+              '',
+              '> 本 issue 由 `Sync upstream` 工作流自动创建。',
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `上游合并冲突：需要手动处理（${new Date().toISOString().slice(0, 10)}）`,
+              body,
+            });

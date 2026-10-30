@@ -141,6 +141,15 @@ public static class ConfigHandler
         {
             config.SpeedTestItem.UdpTestTarget = Global.UdpTestTargets.First();
         }
+        // 默认启用 IP 地区与纯净度检测：一次请求即可拿到国家、城市和机房/VPN 标记
+        if (config.SpeedTestItem.IPAPIUrl.IsNullOrEmpty())
+        {
+            config.SpeedTestItem.IPAPIUrl = Global.DefaultIpApiUrl;
+        }
+        if (config.SpeedTestItem.IpPurityUrl.IsNullOrEmpty())
+        {
+            config.SpeedTestItem.IpPurityUrl = Global.DefaultIpApiUrl;
+        }
 
         config.Mux4RayItem ??= new()
         {
@@ -1027,37 +1036,11 @@ public static class ConfigHandler
     /// <returns>0 if successful, -1 if failed</returns>
     public static async Task<int> SortServers(Config config, string subId, string colName, bool asc)
     {
-        var lstModel = await AppManager.Instance.ProfileModels(subId, "");
-        if (lstModel.Count <= 0)
+        var lstProfile = await BuildProfileListForSort(config, subId);
+        if (lstProfile.Count <= 0)
         {
             return -1;
         }
-        var lstServerStat = (config.GuiItem.EnableStatistics ? StatisticsManager.Instance.ServerStat : null) ?? [];
-        var lstProfileExs = await ProfileExManager.Instance.GetProfileExs();
-        var lstProfile = (from t in lstModel
-                          join t2 in lstServerStat on t.IndexId equals t2.IndexId into t2b
-                          from t22 in t2b.DefaultIfEmpty()
-                          join t3 in lstProfileExs on t.IndexId equals t3.IndexId into t3b
-                          from t33 in t3b.DefaultIfEmpty()
-                          select new ProfileItemModel
-                          {
-                              IndexId = t.IndexId,
-                              ConfigType = t.ConfigType,
-                              Remarks = t.Remarks,
-                              Address = t.Address,
-                              Port = t.Port,
-                              //Security = t.Security,
-                              Network = t.Network,
-                              StreamSecurity = t.StreamSecurity,
-                              Delay = t33?.Delay ?? 0,
-                              Speed = t33?.Speed ?? 0,
-                              Sort = t33?.Sort ?? 0,
-                              IpInfo = t33?.IpInfo ?? string.Empty,
-                              TodayDown = (t22?.TodayDown ?? 0).ToString("D16"),
-                              TodayUp = (t22?.TodayUp ?? 0).ToString("D16"),
-                              TotalDown = (t22?.TotalDown ?? 0).ToString("D16"),
-                              TotalUp = (t22?.TotalUp ?? 0).ToString("D16"),
-                          }).ToList();
 
         Enum.TryParse(colName, true, out EServerColName name);
 
@@ -1074,6 +1057,8 @@ public static class ConfigHandler
                 EServerColName.DelayVal => lstProfile.OrderBy(t => t.Delay).ToList(),
                 EServerColName.SpeedVal => lstProfile.OrderBy(t => t.Speed).ToList(),
                 EServerColName.IpInfo => lstProfile.OrderBy(t => t.IpInfo).ToList(),
+                EServerColName.IpRegion => lstProfile.OrderBy(t => t.IpRegionVal).ToList(),
+                EServerColName.IpPurity => lstProfile.OrderBy(t => t.IpPurity).ToList(),
                 EServerColName.SubRemarks => lstProfile.OrderBy(t => t.Subid).ToList(),
                 EServerColName.TodayDown => lstProfile.OrderBy(t => t.TodayDown).ToList(),
                 EServerColName.TodayUp => lstProfile.OrderBy(t => t.TodayUp).ToList(),
@@ -1095,6 +1080,8 @@ public static class ConfigHandler
                 EServerColName.DelayVal => lstProfile.OrderByDescending(t => t.Delay).ToList(),
                 EServerColName.SpeedVal => lstProfile.OrderByDescending(t => t.Speed).ToList(),
                 EServerColName.IpInfo => lstProfile.OrderByDescending(t => t.IpInfo).ToList(),
+                EServerColName.IpRegion => lstProfile.OrderByDescending(t => t.IpRegionVal).ToList(),
+                EServerColName.IpPurity => lstProfile.OrderByDescending(t => t.IpPurity).ToList(),
                 EServerColName.SubRemarks => lstProfile.OrderByDescending(t => t.Subid).ToList(),
                 EServerColName.TodayDown => lstProfile.OrderByDescending(t => t.TodayDown).ToList(),
                 EServerColName.TodayUp => lstProfile.OrderByDescending(t => t.TodayUp).ToList(),
@@ -1133,6 +1120,79 @@ public static class ConfigHandler
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// 测试结束后按测试结果自动排序：有结果的在前，未测/超时的沉底
+    /// </summary>
+    /// <param name="bySpeed">true 按速度（快的在前），false 按延迟（低的在前）</param>
+    /// <returns>0 if successful, -1 if failed</returns>
+    public static async Task<int> SortServersByTestResult(Config config, string subId, bool bySpeed)
+    {
+        var lstProfile = await BuildProfileListForSort(config, subId);
+        if (lstProfile.Count <= 0)
+        {
+            return -1;
+        }
+
+        lstProfile = bySpeed
+            ? lstProfile.OrderBy(t => t.Speed <= 0 ? 1 : 0).ThenByDescending(t => t.Speed).ToList()
+            : lstProfile.OrderBy(t => t.Delay <= 0 ? 1 : 0).ThenBy(t => t.Delay).ToList();
+
+        for (var i = 0; i < lstProfile.Count; i++)
+        {
+            ProfileExManager.Instance.SetSort(lstProfile[i].IndexId, (i + 1) * 10);
+        }
+
+        // 排序结果需要立即落库，否则进程退出前不会持久化
+        await ProfileExManager.Instance.SaveTo();
+        return 0;
+    }
+
+    /// <summary>
+    /// 供排序使用的节点列表（含订阅、流量统计与测试结果）
+    /// </summary>
+    private static async Task<List<ProfileItemModel>> BuildProfileListForSort(Config config, string subId)
+    {
+        var lstModel = await AppManager.Instance.ProfileModels(subId, "");
+        if (lstModel.Count <= 0)
+        {
+            return [];
+        }
+        var lstServerStat = (config.GuiItem.EnableStatistics ? StatisticsManager.Instance.ServerStat : null) ?? [];
+        var lstProfileExs = await ProfileExManager.Instance.GetProfileExs();
+        return (from t in lstModel
+                join t2 in lstServerStat on t.IndexId equals t2.IndexId into t2b
+                from t22 in t2b.DefaultIfEmpty()
+                join t3 in lstProfileExs on t.IndexId equals t3.IndexId into t3b
+                from t33 in t3b.DefaultIfEmpty()
+                select new ProfileItemModel
+                {
+                    IndexId = t.IndexId,
+                    ConfigType = t.ConfigType,
+                    Remarks = t.Remarks,
+                    Address = t.Address,
+                    Port = t.Port,
+                    //Security = t.Security,
+                    Network = t.Network,
+                    StreamSecurity = t.StreamSecurity,
+                    Delay = t33?.Delay ?? 0,
+                    Speed = t33?.Speed ?? 0,
+                    Sort = t33?.Sort ?? 0,
+                    IpInfo = t33?.IpInfo ?? string.Empty,
+                    IpCountry = t33?.IpCountry ?? string.Empty,
+                    IpRegion = t33?.IpRegion ?? string.Empty,
+                    IpCity = t33?.IpCity ?? string.Empty,
+                    IpType = t33?.IpType ?? string.Empty,
+                    IpPurity = t33?.IpPurity ?? -1,
+                    IpRegionVal = t33?.IpCountry.ToRegionDisplay(t33?.IpCity, t33?.IpRegion) ?? string.Empty,
+                    IpTypeVal = IpQualityHelper.FormatType(t33?.IpType, t33?.IpPurity),
+                    IpPurityVal = IpQualityHelper.FormatPurity(t33?.IpPurity),
+                    TodayDown = (t22?.TodayDown ?? 0).ToString("D16"),
+                    TodayUp = (t22?.TodayUp ?? 0).ToString("D16"),
+                    TotalDown = (t22?.TotalDown ?? 0).ToString("D16"),
+                    TotalUp = (t22?.TotalUp ?? 0).ToString("D16"),
+                }).ToList();
     }
 
     /// <summary>
@@ -2491,6 +2551,12 @@ public static class ConfigHandler
     /// <returns>0 if successful</returns>
     public static async Task<int> SetDefaultRouting(Config config, RoutingItem routingItem)
     {
+        // 全新配置下还没有任何路由项，此时 routingItem 为 null，直接返回失败即可
+        if (routingItem is null)
+        {
+            return -1;
+        }
+
         var items = await AppManager.Instance.RoutingItems();
         if (items.Any(t => t.Id == routingItem.Id && t.IsActive == true))
         {

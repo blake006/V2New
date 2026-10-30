@@ -721,7 +721,7 @@
     <value>開啟 Mux 多路復用</value>
   </data>
   <data name="TbSettingsN" xml:space="preserve">
-    <value>v2rayN 設定</value>
+    <value>V2New 設定</value>
   </data>
   <data name="TbSettingsPass" xml:space="preserve">
     <value>認證密碼</value>
@@ -1771,7 +1771,7 @@
     <value>PreSharedKey</value>
   </data>
   <data name="menuExport2InnerUri" xml:space="preserve">
-    <value>匯出 v2rayN 內部分享連結至剪貼簿（多選）</value>
+    <value>匯出 V2New 內部分享連結至剪貼簿（多選）</value>
   </data>
   <data name="MsgCheckUpdateHasNewVersion" xml:space="preserve">
     <value>{0} 有新版本可用：{1}</value>
@@ -1793,7 +1793,7 @@
 為了安全，此類節點無法透過 26.2.6+ 版本的Xray核心連接
 如果是自建節點請啟用 TLS 等安全加密，或固定憑證 pinSHA256
 若機場節點請聯絡服務商完成技術升級，如服務商拒絕配合，建議更換更重視用戶安全的服務商
-更多的信息，請訪問 https://github.com/2dust/v2rayN/discussions/9460</value>
+更多的信息，請訪問 https://github.com/blake006/V2New</value>
   </data>
   <data name="TbVerifyPeerCertByName" xml:space="preserve">
     <value>Verify Peer Cert By Name</value>
@@ -1844,7 +1844,7 @@
     <value>根憑證提供者</value>
   </data>
   <data name="TbRootCertificateProviderTip" xml:space="preserve">
-    <value>僅適用於 v2rayN GUI 的下載與網路請求，不影響核心的憑證驗證</value>
+    <value>僅適用於 V2New GUI 的下載與網路請求，不影響核心的憑證驗證</value>
   </data>
   <data name="TbProxyDialResolveStrategy" xml:space="preserve">
     <value>連線代理解析策略</value>
@@ -1902,5 +1902,26 @@
   </data>
   <data name="TbSortingProcess" xml:space="preserve">
     <value>行程</value>
+  </data>
+  <data name="LvIpRegion" xml:space="preserve">
+    <value>IP 地區</value>
+  </data>
+  <data name="LvIpPurity" xml:space="preserve">
+    <value>IP 純淨度</value>
+  </data>
+  <data name="menuAutoSortAfterTest" xml:space="preserve">
+    <value>測試後自動排序</value>
+  </data>
+  <data name="menuAutoSortOff" xml:space="preserve">
+    <value>關閉</value>
+  </data>
+  <data name="menuAutoSortByDelay" xml:space="preserve">
+    <value>按延遲排序</value>
+  </data>
+  <data name="menuAutoSortBySpeed" xml:space="preserve">
+    <value>按速度排序</value>
+  </data>
+  <data name="menuAutoRemoveInvalidAfterTest" xml:space="preserve">
+    <value>測試後自動移除無效節點</value>
   </data>
 </root>

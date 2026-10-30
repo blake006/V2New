@@ -718,7 +718,7 @@
     <value>Mux multipleksləşdirməsini aktiv et</value>
   </data>
   <data name="TbSettingsN" xml:space="preserve">
-    <value>v2rayN parametrləri</value>
+    <value>V2New parametrləri</value>
   </data>
   <data name="TbSettingsPass" xml:space="preserve">
     <value>Doğrulama şifrəsi</value>
@@ -1774,7 +1774,7 @@ Təyin edildikdə sertifikat sabitlənəcək və "Təhlükəsiz olmayan əlaqəy
     <value>Əvvəlcədən paylaşılmış açar</value>
   </data>
   <data name="menuExport2InnerUri" xml:space="preserve">
-    <value>v2rayN daxili paylaşım keçidini mübadilə buferinə ixrac et</value>
+    <value>V2New daxili paylaşım keçidini mübadilə buferinə ixrac et</value>
   </data>
   <data name="MsgCheckUpdateHasNewVersion" xml:space="preserve">
     <value>{0} üçün yeni versiya mövcuddur: {1}</value>
@@ -1792,7 +1792,7 @@ Təyin edildikdə sertifikat sabitlənəcək və "Təhlükəsiz olmayan əlaqəy
     <value>Yeni yeniləmə</value>
   </data>
   <data name="MsgAllowInsecureDeprecated" xml:space="preserve">
-    <value>Cari düyün şifrələnməmiş əlaqədən istifadə edir. Bu, rabitənizin avtoritar hökumətlərin nəzarətində olan şəbəkə vasitəçiləri tərəfindən birbaşa izlənə biləcəyi deməkdir. Təhlükəsizlik səbəbilə bu növ düyünlər Xray-core 26.2.6 və daha yeni versiyalar vasitəsilə qoşula bilmir. Düyünü özünüz qurmusunuzsa, TLS və ya başqa təhlükəsiz şifrələməni aktiv edin, yaxud pinSHA256 vasitəsilə sertifikatı sabitləyin. Düyün proksi xidməti provayderinə məxsusdursa, texniki yeniləmə üçün xidmət provayderinizlə əlaqə saxlayın. Provayder əməkdaşlıqdan imtina edərsə, istifadəçi təhlükəsizliyinə üstünlük verən xidmət provayderinə keçmək tövsiyə olunur. Ətraflı məlumat üçün https://github.com/2dust/v2rayN/discussions/9460 səhifəsinə baxın.</value>
+    <value>Cari düyün şifrələnməmiş əlaqədən istifadə edir. Bu, rabitənizin avtoritar hökumətlərin nəzarətində olan şəbəkə vasitəçiləri tərəfindən birbaşa izlənə biləcəyi deməkdir. Təhlükəsizlik səbəbilə bu növ düyünlər Xray-core 26.2.6 və daha yeni versiyalar vasitəsilə qoşula bilmir. Düyünü özünüz qurmusunuzsa, TLS və ya başqa təhlükəsiz şifrələməni aktiv edin, yaxud pinSHA256 vasitəsilə sertifikatı sabitləyin. Düyün proksi xidməti provayderinə məxsusdursa, texniki yeniləmə üçün xidmət provayderinizlə əlaqə saxlayın. Provayder əməkdaşlıqdan imtina edərsə, istifadəçi təhlükəsizliyinə üstünlük verən xidmət provayderinə keçmək tövsiyə olunur. Ətraflı məlumat üçün https://github.com/blake006/V2New səhifəsinə baxın.</value>
   </data>
   <data name="TbRouteExcludeAddress" xml:space="preserve">
     <value>Marşrutlaşdırmadan istisna edilən ünvan</value>
@@ -1840,7 +1840,7 @@ Təyin edildikdə sertifikat sabitlənəcək və "Təhlükəsiz olmayan əlaqəy
     <value>Kök sertifikat təminatçısı</value>
   </data>
   <data name="TbRootCertificateProviderTip" xml:space="preserve">
-    <value>Yalnız v2rayN qrafik interfeysinin endirmələrinə və şəbəkə sorğularına tətbiq edilir. Nüvənin sertifikat yoxlamasına təsir etmir.</value>
+    <value>Yalnız V2New qrafik interfeysinin endirmələrinə və şəbəkə sorğularına tətbiq edilir. Nüvənin sertifikat yoxlamasına təsir etmir.</value>
   </data>
   <data name="TbProxyDialResolveStrategy" xml:space="preserve">
     <value>Proksiyə qoşularkən ünvanın həlli strategiyası</value>

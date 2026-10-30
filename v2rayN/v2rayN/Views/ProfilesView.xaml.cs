@@ -26,6 +26,13 @@ public partial class ProfilesView
         lstProfiles.LoadingRow += LstProfiles_LoadingRow;
         menuSelectAll.Click += menuSelectAll_Click;
 
+        // 测试后自动排序 / 自动清理
+        menuAutoSortOff.Click += MenuAutoSort_Click;
+        menuAutoSortByDelay.Click += MenuAutoSort_Click;
+        menuAutoSortBySpeed.Click += MenuAutoSort_Click;
+        menuAutoRemoveInvalid.Click += MenuAutoRemoveInvalid_Click;
+        SyncAutoSortMenuState();
+
         if (_config.UiItem.EnableDragDropSort)
         {
             lstProfiles.AllowDrop = true;
@@ -208,7 +215,11 @@ public partial class ProfilesView
             return;
         }
 
-        var colName = ((MyDGTextColumn)colHeader.Column).ExName;
+        var colName = (colHeader.Column as IDGColumn)?.ExName;
+        if (colName.IsNullOrEmpty())
+        {
+            return;
+        }
         ViewModel?.SortServer(colName);
     }
 
@@ -216,6 +227,48 @@ public partial class ProfilesView
     {
         lstProfiles.SelectAll();
     }
+
+    #region 测试后自动排序
+
+    private async void MenuAutoSort_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender == menuAutoSortOff)
+        {
+            _config.SpeedTestItem.AutoSortAfterTest = 0;
+        }
+        else if (sender == menuAutoSortByDelay)
+        {
+            _config.SpeedTestItem.AutoSortAfterTest = 1;
+        }
+        else
+        {
+            _config.SpeedTestItem.AutoSortAfterTest = 2;
+        }
+
+        SyncAutoSortMenuState();
+        await ConfigHandler.SaveConfig(_config);
+    }
+
+    private async void MenuAutoRemoveInvalid_Click(object sender, RoutedEventArgs e)
+    {
+        _config.SpeedTestItem.AutoRemoveInvalidAfterTest = menuAutoRemoveInvalid.IsChecked;
+        SyncAutoSortMenuState();
+        await ConfigHandler.SaveConfig(_config);
+    }
+
+    /// <summary>
+    /// 三个排序选项互斥，勾选状态以配置为准
+    /// </summary>
+    private void SyncAutoSortMenuState()
+    {
+        var mode = _config.SpeedTestItem.AutoSortAfterTest;
+        menuAutoSortOff.IsChecked = mode == 0;
+        menuAutoSortByDelay.IsChecked = mode == 1;
+        menuAutoSortBySpeed.IsChecked = mode == 2;
+        menuAutoRemoveInvalid.IsChecked = _config.SpeedTestItem.AutoRemoveInvalidAfterTest;
+    }
+
+    #endregion 测试后自动排序
 
     private void LstProfiles_PreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -329,38 +382,75 @@ public partial class ProfilesView
     {
         try
         {
-            var lvColumnItem = _config.UiItem.MainColumnItem.OrderBy(t => t.Index).ToList();
+            var lvColumnItem = _config.UiItem.MainColumnItem?.OrderBy(t => t.Index).ToList() ?? [];
             var displayIndex = 0;
             foreach (var item in lvColumnItem)
             {
-                foreach (var item2 in lstProfiles.Columns.Cast<MyDGTextColumn>())
+                foreach (var item2 in lstProfiles.Columns)
                 {
-                    if (item2.ExName == item.Name)
+                    if (item2 is not IDGColumn dgColumn || dgColumn.ExName != item.Name)
                     {
-                        if (item.Width < 0)
-                        {
-                            item2.Visibility = Visibility.Hidden;
-                        }
-                        else
-                        {
-                            item2.Width = item.Width;
-                            item2.DisplayIndex = displayIndex++;
-                        }
-                        if (item.Name.StartsWith("to", StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            item2.Visibility = _config.GuiItem.EnableStatistics ? Visibility.Visible : Visibility.Hidden;
-                        }
-                        if (item.Name.Equals("IpInfo", StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            item2.Visibility = _config.SpeedTestItem.IPAPIUrl.IsNotEmpty() && !_config.UiItem.HideColumnIpInfo ? Visibility.Visible : Visibility.Hidden;
-                        }
+                        continue;
+                    }
+                    if (item.Width < 0)
+                    {
+                        item2.Visibility = Visibility.Hidden;
+                    }
+                    else
+                    {
+                        item2.Width = item.Width;
+                        item2.DisplayIndex = displayIndex++;
+                    }
+                    if (item.Name.StartsWith("to", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        item2.Visibility = _config.GuiItem.EnableStatistics ? Visibility.Visible : Visibility.Hidden;
+                    }
+                    if (item.Name.Equals("IpInfo", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        item2.Visibility = _config.SpeedTestItem.IPAPIUrl.IsNotEmpty() && !_config.UiItem.HideColumnIpInfo ? Visibility.Visible : Visibility.Hidden;
                     }
                 }
             }
+
+            // 新增列在旧配置里没有记录，默认追加到末尾并显示
+            foreach (var col in lstProfiles.Columns)
+            {
+                if (col is not IDGColumn dgColumn)
+                {
+                    continue;
+                }
+                if (lvColumnItem.Any(t => t.Name.Equals(dgColumn.ExName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+                col.DisplayIndex = displayIndex++;
+                col.Visibility = Visibility.Visible;
+            }
+
+            ApplyIpColumnVisibility();
         }
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
+        }
+    }
+
+    /// <summary>
+    /// 未配置 IP 接口或关闭纯净度检测时，隐藏对应的列，避免整列空白
+    /// </summary>
+    private void ApplyIpColumnVisibility()
+    {
+        if (_config.SpeedTestItem.IPAPIUrl.IsNullOrEmpty())
+        {
+            colIpInfo.Visibility = Visibility.Hidden;
+            colIpRegion.Visibility = Visibility.Hidden;
+            colIpPurity.Visibility = Visibility.Hidden;
+            return;
+        }
+
+        if (!_config.SpeedTestItem.EnableIpPurity)
+        {
+            colIpPurity.Visibility = Visibility.Hidden;
         }
     }
 
@@ -369,11 +459,15 @@ public partial class ProfilesView
         try
         {
             List<ColumnItem> lvColumnItem = [];
-            foreach (var item2 in lstProfiles.Columns.Cast<MyDGTextColumn>())
+            foreach (var item2 in lstProfiles.Columns)
             {
+                if (item2 is not IDGColumn dgColumn)
+                {
+                    continue;
+                }
                 lvColumnItem.Add(new()
                 {
-                    Name = item2.ExName,
+                    Name = dgColumn.ExName,
                     Width = (int)(item2.Visibility == Visibility.Visible ? item2.ActualWidth : -1),
                     Index = item2.DisplayIndex
                 });

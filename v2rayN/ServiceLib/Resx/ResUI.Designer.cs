@@ -5417,5 +5417,68 @@ namespace ServiceLib.Resx {
                 return ResourceManager.GetString("UpgradeAppNotExistTip", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   查找类似 IP Region 的本地化字符串。
+        /// </summary>
+        public static string LvIpRegion {
+            get {
+                return ResourceManager.GetString("LvIpRegion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 IP Purity 的本地化字符串。
+        /// </summary>
+        public static string LvIpPurity {
+            get {
+                return ResourceManager.GetString("LvIpPurity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Auto sort after test 的本地化字符串。
+        /// </summary>
+        public static string menuAutoSortAfterTest {
+            get {
+                return ResourceManager.GetString("menuAutoSortAfterTest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Off 的本地化字符串。
+        /// </summary>
+        public static string menuAutoSortOff {
+            get {
+                return ResourceManager.GetString("menuAutoSortOff", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 By latency 的本地化字符串。
+        /// </summary>
+        public static string menuAutoSortByDelay {
+            get {
+                return ResourceManager.GetString("menuAutoSortByDelay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 By speed 的本地化字符串。
+        /// </summary>
+        public static string menuAutoSortBySpeed {
+            get {
+                return ResourceManager.GetString("menuAutoSortBySpeed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Auto remove invalid nodes after test 的本地化字符串。
+        /// </summary>
+        public static string menuAutoRemoveInvalidAfterTest {
+            get {
+                return ResourceManager.GetString("menuAutoRemoveInvalidAfterTest", resourceCulture);
+            }
+        }
     }
 }

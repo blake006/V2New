@@ -721,7 +721,7 @@
     <value>Turn on Mux Multiplexing</value>
   </data>
   <data name="TbSettingsN" xml:space="preserve">
-    <value>v2rayN settings</value>
+    <value>V2New settings</value>
   </data>
   <data name="TbSettingsPass" xml:space="preserve">
     <value>Auth pass</value>
@@ -1777,7 +1777,7 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>PreSharedKey</value>
   </data>
   <data name="menuExport2InnerUri" xml:space="preserve">
-    <value>Export v2rayN Internal Share Link to Clipboard</value>
+    <value>Export V2New Internal Share Link to Clipboard</value>
   </data>
   <data name="MsgCheckUpdateHasNewVersion" xml:space="preserve">
     <value>{0} has a new version available: {1}</value>
@@ -1795,7 +1795,7 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>New Update</value>
   </data>
   <data name="MsgAllowInsecureDeprecated" xml:space="preserve">
-    <value>The current node uses an unencrypted connection, meaning your communications could be directly monitored by network intermediaries controlled by authoritarian governments. For security reasons, nodes of this type cannot connect via Xray-core versions 26.2.6 or higher. If this is a self-built node, please enable TLS or other secure encryption, or pin the certificate using pinSHA256. If this is an airport/provider node, please contact your service provider for a technical upgrade. If the provider refuses to cooperate, it is recommended to switch to a service provider that prioritizes user security. For more information, please visit https://github.com/2dust/v2rayN/discussions/9460.</value>
+    <value>The current node uses an unencrypted connection, meaning your communications could be directly monitored by network intermediaries controlled by authoritarian governments. For security reasons, nodes of this type cannot connect via Xray-core versions 26.2.6 or higher. If this is a self-built node, please enable TLS or other secure encryption, or pin the certificate using pinSHA256. If this is an airport/provider node, please contact your service provider for a technical upgrade. If the provider refuses to cooperate, it is recommended to switch to a service provider that prioritizes user security. For more information, please visit https://github.com/blake006/V2New.</value>
   </data>
   <data name="TbRouteExcludeAddress" xml:space="preserve">
     <value>Route Exclude Address</value>
@@ -1843,7 +1843,7 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>Root Certificate Provider</value>
   </data>
   <data name="TbRootCertificateProviderTip" xml:space="preserve">
-    <value>Only applies to the v2rayN GUI's downloads and network requests. Does not affect the core's certificate validation.</value>
+    <value>Only applies to the V2New GUI's downloads and network requests. Does not affect the core's certificate validation.</value>
   </data>
   <data name="TbProxyDialResolveStrategy" xml:space="preserve">
     <value>Proxy Dial Resolution Strategy</value>
@@ -1904,5 +1904,26 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   </data>
   <data name="menuAddMasqueServer" xml:space="preserve">
     <value>Add [MASQUE]</value>
+  </data>
+  <data name="LvIpRegion" xml:space="preserve">
+    <value>IP Region</value>
+  </data>
+  <data name="LvIpPurity" xml:space="preserve">
+    <value>IP Purity</value>
+  </data>
+  <data name="menuAutoSortAfterTest" xml:space="preserve">
+    <value>Auto sort after test</value>
+  </data>
+  <data name="menuAutoSortOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="menuAutoSortByDelay" xml:space="preserve">
+    <value>By latency</value>
+  </data>
+  <data name="menuAutoSortBySpeed" xml:space="preserve">
+    <value>By speed</value>
+  </data>
+  <data name="menuAutoRemoveInvalidAfterTest" xml:space="preserve">
+    <value>Auto remove invalid nodes after test</value>
   </data>
 </root>

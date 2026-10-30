@@ -2,13 +2,12 @@ namespace ServiceLib;
 
 public class Global
 {
-    public const string AppName = "v2rayN";
+    public const string AppName = "V2New";
     public const string GithubUrl = "https://github.com";
     public const string GithubApiUrl = "https://api.github.com/repos";
     public const string GeoUrl = "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/{0}.dat";
     public const string SingboxRulesetUrl = @"https://raw.githubusercontent.com/2dust/sing-box-rules/rule-set-{0}/{1}.srs";
 
-    public const string PromotionUrl = @"aHR0cHM6Ly85LjIzNDQ1Ni54eXovYWJjLmh0bWw=";
     public const string ConfigFileName = "guiNConfig.json";
     public const string CoreConfigFileName = "config.json";
     public const string CorePreConfigFileName = "configPre.json";
@@ -665,7 +664,7 @@ public class Global
         { ECoreType.overtls, "ShadowsocksR-Live/overtls" },
         { ECoreType.shadowquic, "spongebob888/shadowquic" },
         { ECoreType.mieru, "enfein/mieru" },
-        { ECoreType.v2rayN, "2dust/v2rayN" },
+        { ECoreType.v2rayN, "blake006/V2New" },
     };
 
     public static readonly List<string> OtherGeoUrls =
@@ -677,12 +676,19 @@ public class Global
 
     public static readonly List<string> IPAPIUrls =
     [
+        @"http://ip-api.com/json/?fields=status,message,country,countryCode,regionName,city,isp,org,as,proxy,hosting,mobile,query",
+        @"https://api.ipapi.is",
         @"https://api.ip.sb/geoip",
         @"https://api-ipv4.ip.sb/geoip",
         @"https://api-ipv6.ip.sb/geoip",
-        @"https://api.ipapi.is",
         @""
     ];
+
+    /// <summary>
+    /// 默认 IP 信息接口：一次请求同时拿到国家、城市、ASN 与 hosting/proxy 标记，
+    /// 用来判定住宅/机房/代理以及纯净度
+    /// </summary>
+    public const string DefaultIpApiUrl = @"http://ip-api.com/json/?fields=status,message,country,countryCode,regionName,city,isp,org,as,proxy,hosting,mobile,query";
 
     public static readonly List<string> UdpTestTargets =
     [

@@ -117,7 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Restartv2rayN" xml:space="preserve">
+  <data name="RestartV2New" xml:space="preserve">
     <value>正在重启，请等待...</value>
   </data>
   <data name="Guidelines" xml:space="preserve">
@@ -130,10 +130,10 @@
     <value>正在进行中，请等待...</value>
   </data>
   <data name="TryTerminateProcess" xml:space="preserve">
-    <value>尝试结束 v2rayN 进程...</value>
+    <value>尝试结束 V2New 进程...</value>
   </data>
   <data name="FailedTerminateProcess" xml:space="preserve">
-    <value>请手动关闭正在运行的 v2rayN，否则可能升级失败。</value>
+    <value>请手动关闭正在运行的 V2New，否则可能升级失败。</value>
   </data>
   <data name="StartUnzipping" xml:space="preserve">
     <value>开始解压缩更新包...</value>

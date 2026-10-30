@@ -1,0 +1,75 @@
+name: Build & Release
+
+# main 上有提交就构建并发版。
+# Sync upstream 合并成功后也会触发这里，形成「上游更新 -> 自动出新版本」的链路。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 计算版本号
+        id: ver
+        shell: pwsh
+        run: |
+          # 用 run_number 做递增版本，保证客户端能识别到"有新版本"
+          $v = "1.0.${{ github.run_number }}"
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "tag=v$v"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: 发布主程序
+        run: >
+          dotnet publish v2rayN/v2rayN/v2rayN.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:Version=${{ steps.ver.outputs.version }}
+          -o dist/app
+
+      - name: 发布升级工具
+        run: >
+          dotnet publish v2rayN/AmazTool/AmazTool.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:Version=${{ steps.ver.outputs.version }}
+          -o dist/amaz
+
+      - name: 组装发布目录
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/V2New | Out-Null
+          Copy-Item -Path dist/app/* -Destination dist/V2New -Recurse -Force
+          Copy-Item -Path dist/amaz/AmazTool.exe -Destination dist/V2New -Force
+          Copy-Item -Path docs/使用说明.txt -Destination dist/V2New -Force
+
+      - name: 打包
+        shell: pwsh
+        run: |
+          # 必须保留 V2New 顶层目录：AmazTool 解压时会去掉第一段路径
+          Compress-Archive -Path dist/V2New -DestinationPath dist/V2New-windows-64.zip -CompressionLevel Optimal
+
+      - name: 发布 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: V2New ${{ steps.ver.outputs.version }}
+          body: |
+            V2New ${{ steps.ver.outputs.version }}
+
+            基于上游 2dust/v2rayN 自动构建。
+            自包含发布，解压即用，无需安装 .NET 运行时。
+
+            首次使用需在「检查更新 → 内核」中下载 Xray / sing-box / mihomo 内核。
+          files: dist/V2New-windows-64.zip
+          generate_release_notes: true
