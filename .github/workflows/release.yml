@@ -5,6 +5,10 @@ name: Build & Release
 on:
   push:
     branches: [main]
+    # 纯文档改动不必重新出包
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
